@@ -23,7 +23,8 @@ window.students = [
                 phone: "9848723235"
             }
         ],
-        signature: "https://i.postimg.cc/MHKBk07z/E76F5B43-33B2-4A85-9355-A61129934EB1-4-5005-c.jpg"
+        signature: "https://i.postimg.cc/MHKBk07z/E76F5B43-33B2-4A85-9355-A61129934EB1-4-5005-c.jpg",
+        pin: "00001"
     },
 
     {
@@ -50,7 +51,8 @@ window.students = [
                 phone: "9032023235"
             }
         ],
-        signature: "https://i.postimg.cc/RCs66H1z/416511B0-BC02-4C11-928F-CED99F570DE5-4-5005-c.jpg"
+        signature: "https://i.postimg.cc/RCs66H1z/416511B0-BC02-4C11-928F-CED99F570DE5-4-5005-c.jpg",
+        pin: "00002"
     },
 
     {
@@ -77,7 +79,8 @@ window.students = [
                 phone: "9390923235"
             }
         ],
-        signature: "https://i.postimg.cc/N0qrGv64/693F37CD-81F6-45D0-941E-A3738A64C19E-4-5005-c.jpg"
+        signature: "https://i.postimg.cc/N0qrGv64/693F37CD-81F6-45D0-941E-A3738A64C19E-4-5005-c.jpg",
+        pin: "00003"
     },
 
     {
@@ -104,7 +107,8 @@ window.students = [
                 phone: "9989017487"
             }
         ],
-        signature: "https://i.postimg.cc/NjVvmNyM/image.png"
+        signature: "https://i.postimg.cc/NjVvmNyM/image.png",
+        pin: "00004"
     },
 
     {
@@ -131,7 +135,8 @@ window.students = [
                 phone: "8639430057"
             }
         ],
-        signature: "https://i.postimg.cc/Mpnh6ysH/image.png"
+        signature: "https://i.postimg.cc/Mpnh6ysH/image.png",
+        pin: "00005"
     },
 
     {
@@ -158,7 +163,8 @@ window.students = [
                 phone: "9908146015"
             }
         ],
-        signature: "https://i.postimg.cc/rsHDPXsC/image.png"
+        signature: "https://i.postimg.cc/rsHDPXsC/image.png",
+        pin: "00006"
     },
 
     {
@@ -185,7 +191,8 @@ window.students = [
                 phone: "6303236366"
             }
         ],
-        signature: "https://i.postimg.cc/Hx7MTWK3/Screenshot-2026-01-27-155300.png"
+        signature: "https://i.postimg.cc/Hx7MTWK3/Screenshot-2026-01-27-155300.png",
+        pin: "00007"
     },
 
     {
@@ -212,6 +219,7 @@ window.students = [
                 phone: "7989742870"
             }
         ],
-        signature: "https://i.postimg.cc/RhG9JKJp/image.png"
+        signature: "https://i.postimg.cc/RhG9JKJp/image.png",
+        pin: "00008"
     }
 ];

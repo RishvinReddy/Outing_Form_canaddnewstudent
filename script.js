@@ -1,38 +1,74 @@
-// --- 1. Data Initialization (Merge Static + LocalStorage) ---
+// --- 1. Data Strategy: Master List (Seed Once, Then LocalStorage) ---
 const select = document.getElementById("studentSelect");
+const STORAGE_KEY = 'masterStudentList';
 
-// Retrieve custom students from LocalStorage or empty array
-const customStudentsIdx = localStorage.getItem('customStudents');
-const customStudents = customStudentsIdx ? JSON.parse(customStudentsIdx) : [];
+// Initial Load Strategy:
+// 1. Check if 'masterStudentList' exists in LocalStorage.
+// 2. If NO: Take 'window.students' (from data.js), save it to LocalStorage.
+// 3. If YES: Load it. (This means edits/deletes persist, and data.js is ignored after first run).
 
-// Combine static (window.students) and custom students
-// We modify the global students array to include custom ones so other functions (pdf.js) work transparently
-if (window.students) {
-  window.students = [...window.students, ...customStudents];
-} else {
-  // Fallback if data.js didn't load for some reason
-  window.students = [...customStudents];
+let allStudents = [];
+
+function loadStudents() {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored) {
+    allStudents = JSON.parse(stored);
+  } else {
+    // Seed from data.js
+    if (window.students && window.students.length > 0) {
+      allStudents = [...window.students];
+      saveStudents(); // Persist immediately
+    } else {
+      allStudents = [];
+    }
+  }
 }
 
-// Global reference for easy access
-const allStudents = window.students;
+function saveStudents() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(allStudents));
+}
+
+// Reset data to factory settings (re-read data.js)
+function resetDataFactory() {
+  if (confirm("WARNING: This will wipe all custom changes and restore data.js defaults. Continue?")) {
+    localStorage.removeItem(STORAGE_KEY);
+    window.location.reload();
+  }
+}
+
+// Initialize
+loadStudents();
+
 
 // --- 2. Populate Dropdown ---
-// Clear existing options
-select.innerHTML = '<option value="" disabled selected>Select ID / Name</option>';
+function renderDropdown() {
+  select.innerHTML = '<option value="" disabled selected>Select ID / Name</option>';
+  allStudents.forEach((s, i) => {
+    const opt = document.createElement("option");
+    opt.value = i;
+    opt.textContent = `${s.name} (${s.id})`;
+    select.appendChild(opt);
+  });
 
-allStudents.forEach((s, i) => {
-  const opt = document.createElement("option");
-  opt.value = i; // The index in the combined array
-  opt.textContent = `${s.name} (${s.id})`;
-  select.appendChild(opt);
-});
+  // Ensure form is locked initially until a student & PIN are provided
+  // However, avoid error if function not defined yet (hoisting handles it usually, but be safe)
+  if (typeof toggleFormLock === 'function') {
+    toggleFormLock(true);
+  }
+}
+renderDropdown();
 
 
-// --- 3. Modal & Form Logic ---
+// --- 3. Modal & Form Logic (Public & Admin) ---
 
-function openAddStudentModal() {
+function openAddStudentModal(keepData = false) {
   document.getElementById('addStudentModal').classList.add('active');
+
+  if (!keepData) {
+    // Reset form on fresh open
+    document.getElementById('addStudentForm').reset();
+    document.getElementById('addStudentForm').dataset.editIndex = "";
+  }
 }
 
 function closeAddStudentModal() {
@@ -40,11 +76,14 @@ function closeAddStudentModal() {
 }
 
 // Close modal when clicking outside
-document.getElementById('addStudentModal').addEventListener('click', (e) => {
-  if (e.target.id === 'addStudentModal') {
-    closeAddStudentModal();
-  }
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('active');
+    }
+  });
 });
+
 
 function handleNewStudentSubmit(e) {
   e.preventDefault();
@@ -78,26 +117,338 @@ function handleNewStudentSubmit(e) {
         phone: formData.get('studentPhone')
       }
     ],
-    signature: formData.get('signatureUrl')
+    signature: formData.get('signatureUrl'),
+    pin: formData.get('studentPin') || "00000" // Default if missing
   };
 
-  // Save to LocalStorage
-  const currentCustom = JSON.parse(localStorage.getItem('customStudents') || '[]');
-  currentCustom.push(newStudent);
-  localStorage.setItem('customStudents', JSON.stringify(currentCustom));
+  const editIndex = form.dataset.editIndex;
 
-  // Success Feedback
-  alert('Student added successfully!');
+  if (editIndex && editIndex !== "") {
+    // EDIT MODE
+    allStudents[editIndex] = newStudent;
+    alert('Student updated successfully!');
+  } else {
+    // ADD MODE
+    allStudents.push(newStudent);
+    alert('Student added successfully!');
+  }
 
-  // Simple reload to refresh the list and application state
-  window.location.reload();
+  saveStudents();
+
+  // Refresh UI
+  renderDropdown();
+  closeAddStudentModal();
+
+  // If Admin dashboard is open, refresh it too
+  if (document.getElementById('adminDashboardModal').classList.contains('active')) {
+    renderAdminList();
+  }
 }
 
 
-// --- 4. Main Application Logic ---
+// --- 4. Admin Auth & Dashboard Logic ---
+
+// Admin Session Key
+const ADMIN_SESSION_KEY = 'adminSessionActive';
+
+// Enterprise Admin Credentials
+const ADMIN_CREDENTIALS = {
+  sessionId: "28476",
+  mobile: "9848723235",
+  answer: "sumit"
+};
+
+function openAdminAuth() {
+  if (localStorage.getItem(ADMIN_SESSION_KEY) === 'true') {
+    openAdminDashboard();
+  } else {
+    document.getElementById('adminAuthModal').classList.add('active');
+    // Reset inputs
+    document.getElementById('adminSessionId').value = '';
+    document.getElementById('adminMobile').value = '';
+    document.getElementById('adminAnswer').value = '';
+    document.getElementById('adminError').style.display = 'none';
+    document.getElementById('adminSessionId').focus();
+  }
+}
+
+function closeAdminAuth() {
+  document.getElementById('adminAuthModal').classList.remove('active');
+}
+
+function verifyAdminAccess() {
+  const sessionId = document.getElementById("adminSessionId").value.trim();
+  const mobile = document.getElementById("adminMobile").value.trim();
+  const answer = document.getElementById("adminAnswer").value.trim().toLowerCase();
+
+  if (
+    sessionId === ADMIN_CREDENTIALS.sessionId &&
+    mobile === ADMIN_CREDENTIALS.mobile &&
+    answer === ADMIN_CREDENTIALS.answer
+  ) {
+    localStorage.setItem(ADMIN_SESSION_KEY, 'true');
+    closeAdminAuth();
+    openAdminDashboard();
+  } else {
+    const error = document.getElementById("adminError");
+    error.style.display = "block";
+
+    // Simple shake effect
+    const card = document.querySelector('.admin-card');
+    card.style.transform = "translateX(5px)";
+    setTimeout(() => { card.style.transform = "translateX(-5px)"; }, 50);
+    setTimeout(() => { card.style.transform = "translateX(5px)"; }, 100);
+    setTimeout(() => { card.style.transform = "translateX(0)"; }, 150);
+  }
+}
+
+function adminLogout() {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+  closeAdminDashboard();
+  alert("Logged out of Admin Mode");
+}
+
+function closeAdminDashboard() {
+  document.getElementById('adminDashboardModal').classList.remove('active');
+}
+
+function openAdminDashboard() {
+  document.getElementById('adminDashboardModal').classList.add('active');
+  renderAdminList();
+}
+
+function renderAdminList() {
+  const tbody = document.getElementById('studentListBody');
+  const totalCount = document.getElementById('totalCount');
+
+  tbody.innerHTML = '';
+  // Safely update count if element exists
+  if (totalCount) totalCount.textContent = allStudents.length;
+
+  allStudents.forEach((s, i) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+            <td><span style="font-weight: 600; color: #0f172a;">${s.name}</span></td>
+            <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">${s.id}</span></td>
+            <td>${s.program}</td>
+            <td><span style="font-family: monospace; color: #64748b; letter-spacing: 1px;">${s.pin || "----"}</span></td>
+            <td class="text-right">
+                <button onclick="editStudent(${i})" style="margin-right: 5px; background: none; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #3b82f6;" title="Edit">
+                   <i class="fa-solid fa-pen-to-square"></i>
+                </button>
+                <button onclick="deleteStudent(${i})" style="background: none; border: 1px solid #fee2e2; background: #fef2f2; padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #ef4444;" title="Delete">
+                   <i class="fa-solid fa-trash"></i>
+                </button>
+            </td>
+        `;
+    tbody.appendChild(row);
+  });
+}
+
+function deleteStudent(index) {
+  if (confirm(`Are you sure you want to delete ${allStudents[index].name}?`)) {
+    allStudents.splice(index, 1);
+    saveStudents();
+    renderAdminList();
+    renderDropdown(); // Update main dropdown
+  }
+}
+
+function exportDataJS() {
+  // Generate the content exactly as data.js expects
+  const content = `window.students = ${JSON.stringify(allStudents, null, 4)};`;
+
+  const blob = new Blob([content], { type: "text/javascript" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "data.js";
+  document.body.appendChild(a); // Required for Firefox sometimes
+  a.click();
+
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  alert("Downloaded 'data.js'. Replace the file in your project folder to make changes permanent.");
+}
+
+function editStudent(index) {
+  // Reuse the Add Student Modal but populate it
+  const s = allStudents[index];
+  const form = document.getElementById('addStudentForm');
+
+  // Set form values
+  form.studentName.value = s.name;
+  form.studentId.value = s.id;
+  form.gender.value = s.gender;
+  form.program.value = s.program;
+  form.batch.value = s.batch;
+
+  // Parents[0] is Father
+  form.fatherName.value = s.parents[0].name;
+  form.fatherEmail.value = s.parents[0].email;
+  form.fatherPhone.value = s.parents[0].phone;
+
+  // Parents[1] is Mother
+  form.motherName.value = s.parents[1].name;
+  form.motherEmail.value = s.parents[1].email;
+  form.motherPhone.value = s.parents[1].phone;
+
+  // Parents[2] is Student Contact (if exists)
+  if (s.parents[2]) {
+    form.studentEmail.value = s.parents[2].email;
+    form.studentPhone.value = s.parents[2].phone;
+  }
+
+  form.studentPin.value = s.pin || "00000"; // Populate PIN
+  form.signatureUrl.value = s.signature;
+
+  // Mark form as 'Edit Mode'
+  form.dataset.editIndex = index;
+
+  // Show modal
+  closeAdminDashboard(); // Close dash temporarily
+  openAddStudentModal(true); // Pass true to keep the populated data
+}
+
+
+
+// --- 5. PIN Authentication Logic ---
+
+const pinSection = document.getElementById('pin-auth-section');
+const pinInputs = document.querySelectorAll('.pin-input');
+const pinError = document.getElementById('pin-error');
+const pinSuccess = document.getElementById('pin-success');
+const formElementsToLock = [
+  'outDate', 'inDate', 'outingType', 'previewBtn' // IDs of elements to lock
+];
+
+function handleStudentChange() {
+  // 1. Reset everything
+  pinSection.style.display = 'block';
+  pinInputs.forEach(input => {
+    input.value = '';
+    input.classList.remove('success', 'error');
+    input.disabled = false;
+  });
+  pinError.style.display = 'none';
+  pinSuccess.style.display = 'none';
+
+  // 2. Lock Form
+  toggleFormLock(true);
+
+  // 3. Focus first box
+  pinInputs[0].focus();
+}
+
+function toggleFormLock(locked) {
+  // Lock/Unlock Date Inputs and Selects
+  document.getElementById('outDate').disabled = locked;
+  document.getElementById('inDate').disabled = locked;
+  document.getElementById('outingType').disabled = locked;
+
+  // Lock/Unlock Preview Button
+  // We target the button via its onclick handler or just by querying standard buttons in the box
+  const previewBtn = document.querySelector('button[onclick="generatePreview()"]');
+  if (previewBtn) {
+    previewBtn.disabled = locked;
+    previewBtn.style.opacity = locked ? '0.5' : '1';
+    previewBtn.style.cursor = locked ? 'not-allowed' : 'pointer';
+  }
+}
+
+// Initialize PIN Listeners
+pinInputs.forEach((input, index) => {
+  input.addEventListener('keydown', (e) => {
+    // Backspace: move to prev
+    if (e.key === 'Backspace' && !input.value && index > 0) {
+      pinInputs[index - 1].focus();
+    }
+  });
+
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+
+    // 1. Only allow numbers
+    if (!/^\d*$/.test(val)) {
+      e.target.value = '';
+      return;
+    }
+
+    // 2. Auto-advance
+    if (val && index < pinInputs.length - 1) {
+      pinInputs[index + 1].focus();
+    }
+
+    // 3. Check specific PIN logic when full
+    checkPin();
+  });
+});
+
+function getenteredPin() {
+  return Array.from(pinInputs).map(i => i.value).join('');
+}
+
+function checkPin() {
+  const entered = getenteredPin();
+  if (entered.length < 5) return; // Wait for full PIN
+
+  const selectedIndex = select.value;
+  if (!selectedIndex) return;
+
+  const student = allStudents[selectedIndex];
+
+  // PIN Check logic
+  if (!student.pin) {
+    pinError.textContent = "PIN not configured. Contact admin.";
+    pinError.style.display = 'block';
+    return;
+  }
+
+  const correctPin = student.pin;
+
+  if (entered === correctPin) {
+    // SUCCESS
+    pinInputs.forEach(i => {
+      i.classList.add('success');
+      i.classList.remove('error');
+      i.disabled = true; // Lock the active inputs
+    });
+    pinSuccess.style.display = 'block';
+    pinError.style.display = 'none';
+
+    toggleFormLock(false); // UNLOCK FORM
+  } else {
+    // ERROR
+    pinInputs.forEach(i => i.classList.add('error'));
+    pinError.style.display = 'block';
+    pinSuccess.style.display = 'none';
+
+    // Shake animation? Optional.
+    setTimeout(() => {
+      pinInputs.forEach(i => {
+        i.value = '';
+        i.classList.remove('error');
+      });
+      pinInputs[0].focus();
+    }, 1000);
+  }
+}
+
+
+// --- 6. Main Application Logic ---
 
 function generatePreview() {
-  // Use the combined global array
+  if (!select.value) {
+    if (allStudents.length === 0) {
+      alert("No data available. Please add a student.");
+    } else {
+      alert("Please select a student identity");
+    }
+    return;
+  }
+
   const s = allStudents[select.value];
 
   const outDateVal = document.getElementById("outDate").value;
@@ -109,15 +460,7 @@ function generatePreview() {
     return;
   }
 
-  // Hande case where placeholder is selected or invalid value
-  if (!s) {
-    alert("Please select a valid student identity");
-    return;
-  }
-
   // Date formatting helper
-  // Input: YYYY-MM-DD
-  // Output: D.M.YYYY (for body) or D-M-YYYY (for bottom)
   const formatDate = (dateStr, separator) => {
     const d = new Date(dateStr);
     const day = d.getDate();

@@ -542,6 +542,422 @@
         grid-column: span 1;
       }
     }
+
+    .pin-input {
+      width: 100%;
+      height: 45px;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f9fafb;
+      transition: all 0.2s;
+    }
+
+    .pin-input:focus {
+      border-color: var(--primary);
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+      outline: none;
+    }
+
+    .pin-input.success {
+      border-color: #10b981;
+      background: #ecfdf5;
+      color: #059669;
+    }
+
+    /* Pro Admin UI Styles */
+    .admin-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.85);
+      /* Darker backdrop */
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .admin-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .admin-card {
+      background: #0f172a;
+      /* Slate 900 */
+      color: white;
+      width: 100%;
+      max-width: 380px;
+      padding: 40px 30px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .admin-overlay.active .admin-card {
+      transform: translateY(0);
+    }
+
+    .admin-header h2 {
+      margin: 10px 0 8px;
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .admin-header p {
+      font-size: 0.9rem;
+      color: #94a3b8;
+      /* Slate 400 */
+      margin-bottom: 0;
+    }
+
+    .admin-pin-boxes {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 30px 0;
+    }
+
+    .admin-pin {
+      width: 50px;
+      height: 60px;
+      font-size: 24px;
+      text-align: center;
+      border-radius: 10px;
+      border: 2px solid #1e293b;
+      /* Slate 800 */
+      outline: none;
+      background: #020617;
+      /* Slate 950 */
+      color: white;
+      transition: all 0.2s;
+    }
+
+    .admin-pin:focus {
+      border-color: #3b82f6;
+      /* Blue 500 */
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+      background: #0f172a;
+    }
+
+    .admin-btn {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      width: 100%;
+      padding: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.1s, box-shadow 0.2s;
+    }
+
+    .admin-btn:hover {
+      box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .admin-btn:active {
+      transform: translateY(0);
+    }
+
+    .admin-error {
+      color: #ef4444;
+      font-size: 0.9rem;
+      display: none;
+      margin-bottom: 20px;
+      background: rgba(239, 68, 68, 0.1);
+      padding: 8px;
+      border-radius: 6px;
+    }
+
+    @keyframes shake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      10%,
+      30%,
+      50%,
+      70%,
+      90% {
+        transform: translateX(-4px);
+      }
+
+      20%,
+      40%,
+      60%,
+      80% {
+        transform: translateX(4px);
+      }
+    }
+
+    .shake {
+      animation: shake 0.4s cubic-bezier(.36, .07, .19, .97) both;
+    }
+
+    /* --- Pro Dashboard Styles --- */
+    .dashboard-card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 950px;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-direction: column;
+      max-height: 85vh;
+      animation: slideUp 0.4s ease-out;
+    }
+
+    .dashboard-header {
+      background: #0f172a;
+      color: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .logo-icon {
+      font-size: 1.8rem;
+      color: #3b82f6;
+      background: rgba(255, 255, 255, 0.1);
+      width: 45px;
+      height: 45px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 10px;
+    }
+
+    .brand h3 {
+      margin: 0;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .logout-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 0.85rem;
+    }
+
+    .logout-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .close-dashboard {
+      background: none;
+      border: none;
+      font-size: 2rem;
+      color: rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .close-dashboard:hover {
+      color: white;
+    }
+
+    /* Stats Row */
+    .dashboard-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 25px 30px 10px;
+    }
+
+    .stat-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      padding: 20px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .stat-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stat-icon.blue {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .stat-icon.green {
+      background: #f0fdf4;
+      color: #22c55e;
+    }
+
+    .stat-info h4 {
+      margin: 0;
+      font-size: 1.4rem;
+      color: #0f172a;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #64748b;
+      font-weight: 500;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    /* Toolbar */
+    .dashboard-toolbar {
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 1.1rem;
+      color: #334155;
+    }
+
+    .action-btn {
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .action-btn.primary {
+      background: #2563eb;
+      color: white;
+      box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.3);
+    }
+
+    .action-btn.success {
+      background: #059669;
+      color: white;
+    }
+
+    .action-btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    /* Table */
+    .table-container {
+      padding: 0 30px 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .admin-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    .admin-table th {
+      text-align: left;
+      padding: 12px 15px;
+      background: #f8fafc;
+      color: #64748b;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .admin-table td {
+      padding: 14px 15px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      font-size: 0.95rem;
+    }
+
+    .text-right {
+      text-align: right;
+    }
+
+    /* Footer */
+    .dashboard-footer {
+      padding: 20px 30px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8fafc;
+    }
+
+    .text-danger-btn {
+      color: #ef4444;
+      background: none;
+      border: none;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
   </style>
 </head>
 
@@ -552,7 +968,14 @@
     <!-- Left Column -->
     <div class="form-section">
       <div class="form-card">
-        <div class="header">
+        <div class="header" style="position: relative;">
+          <!-- Admin Lock Button -->
+          <button onclick="openAdminAuth()"
+            style="position: absolute; top: -10px; right: -10px; background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 10px; transition: color 0.3s;"
+            title="Admin Access">
+            <i class="fa-solid fa-lock"></i>
+          </button>
+
           <i class="fa-solid fa-file-shield"></i>
           <h1>Outing Permission</h1>
           <p>Generate your official pass PDF instantly.</p>
@@ -564,9 +987,9 @@
             <div style="display: flex; gap: 10px;">
               <div class="input-wrapper" style="flex: 1;">
                 <i class="fa-solid fa-user-graduate"></i>
-                <select id="studentSelect">
+                <select id="studentSelect" onchange="handleStudentChange()">
                   <option value="" disabled selected>Select ID / Name</option>
-                  <option value="student1">Rishvin Reddy (12345)</option>
+                  <!-- Populated by JS -->
                 </select>
               </div>
               <button class="primary-btn" onclick="openAddStudentModal()" title="Add New Student"
@@ -574,6 +997,26 @@
                 <i class="fa-solid fa-plus"></i>
               </button>
             </div>
+          </div>
+
+          <!-- PIN Auth Section -->
+          <div id="pin-auth-section" style="margin-bottom: 1.5rem; display: none;">
+            <label style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px;">
+              <i class="fa-solid fa-shield-halved" style="margin-right: 5px;"></i> Enter PIN to Unlock
+            </label>
+            <div class="pin-boxes" style="display: flex; gap: 10px; justify-content: space-between;">
+              <input type="text" maxlength="1" class="pin-input" inputmode="numeric">
+              <input type="text" maxlength="1" class="pin-input" inputmode="numeric">
+              <input type="text" maxlength="1" class="pin-input" inputmode="numeric">
+              <input type="text" maxlength="1" class="pin-input" inputmode="numeric">
+              <input type="text" maxlength="1" class="pin-input" inputmode="numeric">
+            </div>
+            <small id="pin-error" style="color: #ef4444; display: none; margin-top: 5px; font-size: 0.8rem;">
+              <i class="fa-solid fa-circle-exclamation"></i> Incorrect PIN
+            </small>
+            <small id="pin-success" style="color: #10b981; display: none; margin-top: 5px; font-size: 0.8rem;">
+              <i class="fa-solid fa-check-circle"></i> Identity Verified
+            </small>
           </div>
 
           <div class="trip-section">
@@ -676,6 +1119,11 @@
               <input type="text" name="batch" required placeholder="Ex: 2024-2028">
             </div>
 
+            <div class="form-group">
+              <label>Login PIN (5 Digits)</label>
+              <input type="text" name="studentPin" maxlength="5" pattern="\d{5}" required placeholder="Ex: 00001">
+            </div>
+
             <!-- Contact Info -->
             <div class="form-group">
               <label>Student Email</label>
@@ -741,6 +1189,133 @@
 
           </div>
         </form>
+      </div>
+    </div>
+
+    <!-- Admin Auth Modal -->
+    <!-- Enterprise Admin Login Modal -->
+    <div id="adminAuthModal" class="admin-overlay">
+      <div class="admin-card">
+
+        <h2>ADMINISTRATOR ACCESS</h2>
+        <p class="subtitle">Restricted system • Authorized personnel only</p>
+
+        <div class="admin-field">
+          <label>Admin Session ID</label>
+          <input type="text" id="adminSessionId" placeholder="Enter session ID">
+        </div>
+
+        <div class="admin-field">
+          <label>Registered Mobile Number</label>
+          <input type="text" id="adminMobile" placeholder="Enter mobile number">
+        </div>
+
+        <div class="admin-field">
+          <label>Security Question</label>
+          <input type="text" value="What is your best friend's name?" disabled
+            style="background: rgba(255,255,255,0.05); color: #9ca3af; cursor: not-allowed;">
+        </div>
+
+        <div class="admin-field">
+          <label>Security Answer</label>
+          <input type="password" id="adminAnswer" placeholder="Enter answer">
+        </div>
+
+        <p id="adminError" class="admin-error">
+          <i class="fa-solid fa-circle-exclamation"></i> Invalid admin credentials
+        </p>
+
+        <button onclick="verifyAdminAccess()" class="admin-btn">
+          VERIFY & UNLOCK
+        </button>
+
+        <button onclick="closeAdminAuth()"
+          style="width:100%; margin-top:10px; background:none; border:none; color: #6b7280; font-size:0.85rem; cursor:pointer;">
+          Cancel Request
+        </button>
+
+      </div>
+    </div>
+
+    <!-- Pro Admin Dashboard Modal -->
+    <div id="adminDashboardModal" class="admin-overlay">
+      <div class="dashboard-card">
+
+        <!-- Dashboard Header -->
+        <div class="dashboard-header">
+          <div class="brand">
+            <div class="logo-icon"><i class="fa-solid fa-shield-cat"></i></div>
+            <div>
+              <h3>Admin Portal</h3>
+              <p>System Administration</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button onclick="adminLogout()" class="logout-btn">
+              <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+            <button class="close-dashboard" onclick="closeAdminDashboard()">&times;</button>
+          </div>
+        </div>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-stats">
+          <div class="stat-card">
+            <div class="stat-icon blue"><i class="fa-solid fa-users"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Total Students</span>
+              <h4 id="totalCount">0</h4>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon green"><i class="fa-solid fa-database"></i></div>
+            <div class="stat-info">
+              <span class="stat-label">Database Status</span>
+              <h4>Active</h4>
+            </div>
+          </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="dashboard-toolbar">
+          <h4 class="section-title">Student Records</h4>
+          <button class="action-btn primary" onclick="openAddStudentModal()">
+            <i class="fa-solid fa-plus"></i> Add Student
+          </button>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>ID</th>
+                <th>Program</th>
+                <th>Sec. PIN</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentListBody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Dashboard Footer -->
+        <div class="dashboard-footer">
+          <div class="footer-left">
+            <button onclick="resetDataFactory()" class="text-danger-btn">
+              <i class="fa-solid fa-rotate-left"></i> Factory Reset
+            </button>
+          </div>
+          <div class="footer-right">
+            <button onclick="exportDataJS()" class="action-btn success">
+              <i class="fa-solid fa-file-export"></i> Export Data.js
+            </button>
+          </div>
+        </div>
+
       </div>
     </div>
 

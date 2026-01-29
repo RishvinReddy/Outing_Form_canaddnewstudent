@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Outing Permission Generator</title>
+
+
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #0088ff;
+      /* Indigo */
+      --primary-hover: #4338ca;
+      --bg-gradient: linear-gradient(135deg, #000000 0%, #323132 100%);
+      --surface: #ffffff;
+      --text-main: #1f2937;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --radius: 12px;
+      --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+    }
+
+    /* --- Preview Area --- */
+    /* --- Preview Area --- */
+    /* --- Preview Area --- */
+    #preview {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      box-sizing: border-box;
+      background: white;
+      font-size: 14px;
+      font-family: "Times New Roman", serif;
+      margin: auto;
+      /* Keep it centered */
+    }
+
+    /* Force page breaks */
+    .page-break {
+      break-before: page;
+      page-break-before: always;
+    }
+
+    /* Prevent ugly splits */
+    p,
+    table,
+    tr,
+    td {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    .page-break {
+      page-break-before: always;
+    }
+
+    @media print {
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+    }
+
+    .page {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .page-break {
+      height: 1px;
+    }
+
+    @media screen and (max-width: 1200px) {
+      /* preserved media query structure but can be empty if not needed by new logic */
+    }
+
+    /* Download button wrapper */
+    .download-section {
+      width: 100%;
+      max-width: 210mm;
+      display: none;
+      /* Toggled by script */
+      justify-content: center;
+    }
+
+    @media screen and (max-width: 950px) {
+      .app-layout {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .form-section {
+        flex: auto;
+        width: 100%;
+        max-width: 480px;
+      }
+
+      .form-card {
+        position: static;
+      }
+
+      /* Responsive preview for mobile UX */
+      #preview {
+        width: 100%;
+        min-height: auto;
+        padding: 5%;
+        aspect-ratio: 210/297;
+        height: auto;
+      }
+    }
+
+    body {
+      font-family: 'Times New Roman', Times, serif;
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-main);
+      align-items: flex-start;
+      /* Align top */
+    }
+
+    .app-layout {
+      display: flex;
+      flex-direction: column;
+      /* Stack vertically */
+      align-items: center;
+      /* Center horizontally */
+      gap: 40px;
+      width: 100%;
+      max-width: 1000px;
+      /* Limit max width for better readability */
+      padding: 20px;
+    }
+
+    /* Left Column: Form */
+    .form-section {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: 480px;
+      /* Keep form width compact */
+    }
+
+    /* Keep existing container styles but apply to form-inner */
+    .form-card {
+      background: var(--surface);
+      width: 100%;
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.5s ease-out;
+      position: sticky;
+      top: 20px;
+    }
+
+    /* Right Column: Preview */
+    .preview-section {
+      flex: 0 0 auto;
+      /* removed flex: 1 to allow centering */
+      min-width: 0;
+      /* Prevent flex overflow */
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* Center horizontally */
+      justify-content: flex-start;
+    }
+
+    .container {
+      background: var(--surface);
+      width: 100%;
+      max-width: 480px;
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    /* --- Header Section --- */
+    .header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .header h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    .header i {
+      font-size: 2rem;
+      color: var(--primary);
+      margin-bottom: 1rem;
+      display: inline-block;
+      background: #e0e7ff;
+      padding: 12px;
+      border-radius: 50%;
+    }
+
+    /* --- Form Elements --- */
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      color: var(--text-main);
+    }
+
+    /* Wrapper for Input Icons */
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-wrapper i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    select,
+    input[type="date"] {
+      width: 100%;
+      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      /* Space for icon */
+      font-size: 0.95rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: #f9fafb;
+      color: var(--text-main);
+      transition: all 0.2s ease;
+      font-family: inherit;
+      appearance: none;
+    }
+
+    /* Custom arrow for selects */
+    .select-wrapper .input-wrapper::after {
+      content: '\f107';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    select:focus,
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      background-color: #fff;
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    /* --- Smart Date Section --- */
+    .trip-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .section-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .date-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+
+    .date-card:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+
+    .date-inputs {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .date-field {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sub-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .date-field input {
+      border: none;
+      background: transparent;
+      padding: 5px 0;
+      font-weight: 600;
+      color: var(--text-main);
+      font-size: 0.95rem;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .date-field input:focus {
+      box-shadow: none;
+      outline: none;
+    }
+
+    .duration-display {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      min-width: 60px;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      background: #e0e7ff;
+      color: var(--primary);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-top: 4px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .badge.visible {
+      opacity: 1;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .chip {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      cursor: pointer;
+      width: auto;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background: #f3f4f6;
+      border-color: var(--text-muted);
+      color: var(--text-main);
+    }
+
+    /* --- Buttons --- */
+    button.primary-btn,
+    button#downloadBtn {
+      width: 100%;
+      padding: 0.875rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: white;
+      background-color: var(--primary);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    button.primary-btn:hover {
+      background-color: var(--primary-hover);
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    #downloadBtn {
+      background-color: #10b981;
+      /* Green */
+      margin-top: 1rem;
+    }
+
+    #downloadBtn:hover {
+      background-color: #059669;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* --- Modal Styles --- */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-card {
+      background: var(--surface);
+      width: 100%;
+      max-width: 600px;
+      max-height: 90vh;
+      /* Allow scrolling if tall */
+      overflow-y: auto;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 2rem;
+      position: relative;
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-card {
+      transform: translateY(0);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 1rem;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      color: var(--text-main);
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      color: var(--text-main);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .full-width {
+      grid-column: span 2;
+    }
+
+    .section-title {
+      grid-column: span 2;
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-top: 10px;
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 4px;
+    }
+
+    @media (max-width: 600px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="app-layout">
+
+    <!-- Left Column -->
+    <div class="form-section">
+      <div class="form-card">
+        <div class="header">
+          <i class="fa-solid fa-file-shield"></i>
+          <h1>Outing Permission</h1>
+          <p>Generate your official pass PDF instantly.</p>
+        </div>
+
+        <div class="box">
+          <div class="form-group select-wrapper">
+            <label>Student Identity</label>
+            <div style="display: flex; gap: 10px;">
+              <div class="input-wrapper" style="flex: 1;">
+                <i class="fa-solid fa-user-graduate"></i>
+                <select id="studentSelect">
+                  <option value="" disabled selected>Select ID / Name</option>
+                  <option value="student1">Rishvin Reddy (12345)</option>
+                </select>
+              </div>
+              <button class="primary-btn" onclick="openAddStudentModal()" title="Add New Student"
+                style="width: auto; padding: 0 1rem; margin: 0;">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="trip-section">
+            <label class="section-label">Trip Duration</label>
+
+            <div class="date-card">
+              <div class="date-inputs">
+                <div class="date-field">
+                  <span class="sub-label">Departing</span>
+                  <input type="date" id="outDate" onchange="handleDateChange()">
+                </div>
+
+                <div class="duration-display">
+                  <i class="fa-solid fa-arrow-right-long"></i>
+                  <span id="durationBadge" class="badge">-- Days</span>
+                </div>
+
+                <div class="date-field">
+                  <span class="sub-label">Returning</span>
+                  <input type="date" id="inDate" onchange="handleDateChange()">
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-actions">
+              <button type="button" class="chip" onclick="setWeekend('this')">This Weekend</button>
+              <button type="button" class="chip" onclick="setWeekend('next')">Next Weekend</button>
+            </div>
+          </div>
+
+          <div class="form-group select-wrapper">
+            <label>Outing Type</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-person-walking-luggage"></i>
+              <select id="outingType">
+                <option value="">Select Type</option>
+                <option>Weekend Outing</option>
+                <option>Festival Outing</option>
+                <option>Emergency</option>
+              </select>
+            </div>
+          </div>
+
+          <button class="primary-btn" onclick="generatePreview()">
+            <i class="fa-solid fa-eye"></i> Preview PDF
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="preview-section">
+      <div id="preview" class="preview"></div>
+
+      <div id="downloadWrapper" class="download-section">
+        <button id="downloadBtn" onclick="downloadPDF()">
+          <i class="fa-solid fa-download"></i> Download PDF
+        </button>
+      </div>
+    </div>
+
+    <!-- Add Student Modal -->
+    <div id="addStudentModal" class="modal-overlay">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2>Add New Student</h2>
+          <button class="close-btn" onclick="closeAddStudentModal()">&times;</button>
+        </div>
+
+        <form id="addStudentForm" onsubmit="handleNewStudentSubmit(event)">
+          <div class="form-grid">
+            <!-- Basic Info -->
+            <div class="section-title">Student Details</div>
+
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" name="studentName" required placeholder="Ex: Rishvin Reddy">
+            </div>
+
+            <div class="form-group">
+              <label>Student ID</label>
+              <input type="text" name="studentId" required placeholder="Ex: 24WU...">
+            </div>
+
+            <div class="form-group">
+              <label>Gender</label>
+              <select name="gender" required>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Program</label>
+              <input type="text" name="program" required placeholder="Ex: CSE (BIC)">
+            </div>
+
+            <div class="form-group">
+              <label>Batch</label>
+              <input type="text" name="batch" required placeholder="Ex: 2024-2028">
+            </div>
+
+            <!-- Contact Info -->
+            <div class="form-group">
+              <label>Student Email</label>
+              <input type="email" name="studentEmail" required placeholder="woxsen.edu.in">
+            </div>
+
+            <div class="form-group">
+              <label>Student Phone</label>
+              <input type="tel" name="studentPhone" required placeholder="10 digits">
+            </div>
+
+            <!-- Father Info -->
+            <div class="section-title">Father's Info</div>
+
+            <div class="form-group full-width">
+              <label>Father's Name</label>
+              <input type="text" name="fatherName" required>
+            </div>
+
+            <div class="form-group">
+              <label>Father's Email</label>
+              <input type="email" name="fatherEmail" required>
+            </div>
+
+            <div class="form-group">
+              <label>Father's Phone</label>
+              <input type="tel" name="fatherPhone" required>
+            </div>
+
+            <!-- Mother Info -->
+            <div class="section-title">Mother's Info</div>
+
+            <div class="form-group full-width">
+              <label>Mother's Name</label>
+              <input type="text" name="motherName" required>
+            </div>
+
+            <div class="form-group">
+              <label>Mother's Email</label>
+              <input type="email" name="motherEmail" required>
+            </div>
+
+            <div class="form-group">
+              <label>Mother's Phone</label>
+              <input type="tel" name="motherPhone" required>
+            </div>
+
+            <!-- Signature -->
+            <div class="section-title">Signature</div>
+            <div class="form-group full-width">
+              <label>Signature Image URL (Direct Link)</label>
+              <input type="url" name="signatureUrl" required placeholder="https://i.postimg.cc/..."
+                title="Must be a direct link ending in .png or .jpg">
+              <small style="color: var(--text-muted); display: block; margin-top: 5px;">
+                Upload transparent signature to <a href="https://postimages.org/" target="_blank">PostImages</a> and
+                paste the 'Direct Link'.
+              </small>
+            </div>
+
+            <div class="full-width" style="margin-top: 1rem;">
+              <button type="submit" class="primary-btn">Save Student</button>
+            </div>
+
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script src="pdf.js"></script>
+
+  <script>
+    // Handles the Duration Badge logic and Date validation
+    function handleDateChange() {
+      const outDate = document.getElementById('outDate');
+      const inDate = document.getElementById('inDate');
+      const badge = document.getElementById('durationBadge');
+
+      // Prevent selecting a return date before departure
+      if (outDate.value) {
+        inDate.min = outDate.value;
+      }
+
+      // Reset if dates are invalid (Return before Depart)
+      if (inDate.value && outDate.value && inDate.value < outDate.value) {
+        inDate.value = "";
+        badge.classList.remove('visible');
+        return;
+      }
+
+      // Calculate Duration
+      if (outDate.value && inDate.value) {
+        const start = new Date(outDate.value);
+        const end = new Date(inDate.value);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Inclusive
+
+        badge.textContent = `${diffDays} Days`;
+        badge.classList.add('visible');
+      } else {
+        badge.classList.remove('visible');
+      }
+    }
+
+    // Quick Weekend Selection Logic (Updated)
+    function setWeekend(which) {
+      const today = new Date();
+      const outDateInput = document.getElementById('outDate');
+      const inDateInput = document.getElementById('inDate');
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+      let daysToFriday = 0;
+
+      // 1. DETERMINE "THIS WEEKEND" FRIDAY
+      if (dayOfWeek === 6) {
+        // Today is Saturday -> "This Weekend" started Yesterday (Friday)
+        daysToFriday = -1;
+      } else if (dayOfWeek === 0) {
+        // Today is Sunday -> "This Weekend" started Last Friday
+        daysToFriday = -2;
+      } else {
+        // Monday (1) through Friday (5) -> Upcoming Friday (or Today if Friday)
+        // Mon: 5-1=4, Fri: 5-5=0
+        daysToFriday = 5 - dayOfWeek;
+      }
+
+      // Set the target departure date
+      let targetFriday = new Date(today);
+      targetFriday.setDate(today.getDate() + daysToFriday);
+
+      // 2. ADJUST FOR "NEXT WEEKEND"
+      if (which === 'next') {
+        // Simply add 7 days to whatever we calculated as "This Weekend's" Friday
+        targetFriday.setDate(targetFriday.getDate() + 7);
+      }
+
+      // Helper to format YYYY-MM-DD
+      const formatDate = (date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+
+      // 3. SET THE INPUT VALUES
+      // Set Departure (Friday)
+      outDateInput.value = formatDate(targetFriday);
+
+      // Set Return (Sunday = Friday + 2 days)
+      const targetSunday = new Date(targetFriday);
+      targetSunday.setDate(targetFriday.getDate() + 2);
+      inDateInput.value = formatDate(targetSunday);
+
+      // Update UI Elements
+      handleDateChange();
+
+      // Auto-select type
+      const typeSelect = document.getElementById('outingType');
+      if (typeSelect) typeSelect.value = "Weekend Outing";
+    }
+  </script>
+
+</body>
+
+</html>

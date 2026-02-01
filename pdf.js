@@ -5,7 +5,10 @@ function downloadPDF() {
         return;
     }
 
-    const s = students[Number(select.value)];
+    // Use the runtime 'allStudents' array which contains both file data + local additions
+    // Fallback to window.students if allStudents isn't ready
+    const sourceData = (typeof allStudents !== 'undefined' && allStudents.length > 0) ? allStudents : window.students;
+    const s = sourceData[Number(select.value)];
     if (!s) {
         alert("Invalid student selected");
         return;

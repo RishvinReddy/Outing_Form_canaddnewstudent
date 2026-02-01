@@ -1,27 +1,39 @@
-// --- 1. Data Strategy: Master List (Seed Once, Then LocalStorage) ---
+// --- 1. Data Strategy: Smart Sync (File + Local) ---
 const select = document.getElementById("studentSelect");
-const STORAGE_KEY = 'masterStudentList';
+const STORAGE_KEY = 'localStudentsData';
 
 // Initial Load Strategy:
-// 1. Check if 'masterStudentList' exists in LocalStorage.
-// 2. If NO: Take 'window.students' (from data.js), save it to LocalStorage.
-// 3. If YES: Load it. (This means edits/deletes persist, and data.js is ignored after first run).
+// 1. Always load 'window.students' (from data.js) as base.
+// 2. Check 'localStudentsData' in LocalStorage.
+// 3. Merge strictly NEW additions from local (ID check) into base.
 
 let allStudents = [];
 
+// --- 1. Data Initialization (Smart Merge) ---
+// Priority: data.js (window.students) -> localStorage additions
 function loadStudents() {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored) {
-    allStudents = JSON.parse(stored);
-  } else {
-    // Seed from data.js
-    if (window.students && window.students.length > 0) {
-      allStudents = [...window.students];
-      saveStudents(); // Persist immediately
-    } else {
-      allStudents = [];
+  const fileData = window.students || [];
+  let mergedData = [...fileData];
+
+  const localRaw = localStorage.getItem('localStudentsData');
+  if (localRaw) {
+    try {
+      const localData = JSON.parse(localRaw);
+      // Find students present in Local but MISSING in File (User added custom students)
+      const newAdditions = localData.filter(l => !fileData.some(f => f.id === l.id));
+
+      if (newAdditions.length > 0) {
+        // Append new additions
+        mergedData = [...mergedData, ...newAdditions];
+      }
+    } catch (e) {
+      console.error("Error merging local data", e);
     }
   }
+
+  allStudents = mergedData;
+  // Sync the merged result back to cache so next reload is consistent
+  saveStudents();
 }
 
 function saveStudents() {
@@ -29,9 +41,11 @@ function saveStudents() {
 }
 
 // Reset data to factory settings (re-read data.js)
+// Reset data to factory settings (re-read data.js)
 function resetDataFactory() {
   if (confirm("WARNING: This will wipe all custom changes and restore data.js defaults. Continue?")) {
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('localStudentsData');
+    localStorage.removeItem(ADMIN_SESSION_KEY);
     window.location.reload();
   }
 }
@@ -61,89 +75,114 @@ renderDropdown();
 
 // --- 3. Modal & Form Logic (Public & Admin) ---
 
-function openAddStudentModal(keepData = false) {
-  document.getElementById('addStudentModal').classList.add('active');
-
-  if (!keepData) {
-    // Reset form on fresh open
-    document.getElementById('addStudentForm').reset();
-    document.getElementById('addStudentForm').dataset.editIndex = "";
-  }
+// --- OTP Helpers ---
+function getStudentPin() {
+  return [...document.querySelectorAll(".student-pin-box")]
+    .map(b => b.value)
+    .join("");
 }
 
-function closeAddStudentModal() {
-  document.getElementById('addStudentModal').classList.remove('active');
-}
+// --- Save Student (Perfect Mapping) ---
+function saveNewStudent() {
+  const pin = getStudentPin();
+  const error = document.getElementById("studentError");
 
-// Close modal when clicking outside
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) {
-      overlay.classList.remove('active');
-    }
-  });
-});
-
-
-function handleNewStudentSubmit(e) {
-  e.preventDefault();
-
-  const form = e.target;
-  const formData = new FormData(form);
-
-  // Construct the student object strictly matching data.js structure
   const newStudent = {
-    name: formData.get('studentName'),
-    id: formData.get('studentId'),
-    gender: formData.get('gender'),
-    program: formData.get('program'),
-    batch: formData.get('batch'),
-    father: formData.get('fatherName'),
+    name: document.getElementById("studentName").value.trim(),
+    id: document.getElementById("studentId").value.trim(),
+    gender: document.getElementById("studentGender").value,
+    program: document.getElementById("studentProgram").value.trim(),
+    batch: document.getElementById("studentBatch").value.trim(),
+    father: document.getElementById("fatherName").value.trim(),
+
     parents: [
       {
-        name: formData.get('fatherName'),
-        email: formData.get('fatherEmail'),
-        phone: formData.get('fatherPhone')
+        name: document.getElementById("fatherName").value.trim(),
+        email: document.getElementById("fatherEmail").value.trim(),
+        phone: document.getElementById("fatherPhone").value.trim()
       },
       {
-        name: formData.get('motherName'),
-        email: formData.get('motherEmail'),
-        phone: formData.get('motherPhone')
+        name: document.getElementById("motherName").value.trim(),
+        email: document.getElementById("motherEmail").value.trim(),
+        phone: document.getElementById("motherPhone").value.trim()
       },
       {
-        // Internal consistency: The existing data.js includes student in the parents list
-        name: formData.get('studentName'),
-        email: formData.get('studentEmail'),
-        phone: formData.get('studentPhone')
+        name: document.getElementById("studentName").value.trim(),
+        email: document.getElementById("studentEmail").value.trim(),
+        phone: document.getElementById("studentPhone").value.trim()
       }
     ],
-    signature: formData.get('signatureUrl'),
-    pin: formData.get('studentPin') || "00000" // Default if missing
+
+    signature: document.getElementById("studentSignature").value.trim(),
+    pin
   };
 
-  const editIndex = form.dataset.editIndex;
-
-  if (editIndex && editIndex !== "") {
-    // EDIT MODE
-    allStudents[editIndex] = newStudent;
-    alert('Student updated successfully!');
-  } else {
-    // ADD MODE
-    allStudents.push(newStudent);
-    alert('Student added successfully!');
+  // basic validation
+  if (!newStudent.name || !newStudent.id || !newStudent.program || !newStudent.batch || !pin || pin.length !== 5) {
+    if (error) error.style.display = "block";
+    return;
   }
 
-  saveStudents();
+  if (currentEditIndex !== null) {
+    // UPDATE EXISTING
+    allStudents[currentEditIndex] = newStudent;
+    alert(`Student Updated: ${newStudent.name}`);
+    currentEditIndex = null; // Reset
+  } else {
+    // CREATE NEW
+    allStudents.push(newStudent);
+    alert('Student Record Saved Successfully.');
+  }
 
-  // Refresh UI
+  localStorage.setItem('localStudentsData', JSON.stringify(allStudents));
+
+  closeAddStudent();
   renderDropdown();
-  closeAddStudentModal();
 
-  // If Admin dashboard is open, refresh it too
-  if (document.getElementById('adminDashboardModal').classList.contains('active')) {
+  if (typeof renderAdminList === 'function' && document.getElementById('adminDashboardModal').classList.contains('active')) {
     renderAdminList();
   }
+
+  // Auto-Select the new student for preview
+  const select = document.getElementById('studentSelect');
+  if (select) {
+    // Find the index of the newly added/updated student
+    const newIndex = allStudents.findIndex(s => s.id === newStudent.id);
+    if (newIndex !== -1) {
+      select.value = newIndex; // Select by Index
+      if (typeof handleStudentChange === 'function') handleStudentChange(); // Trigger Preview
+    }
+  }
 }
+
+function openAddStudentModal() {
+  // Clear Inputs
+  document.querySelectorAll('#addStudentOverlay input').forEach(i => i.value = '');
+  document.querySelectorAll('.student-pin-box').forEach(i => i.value = '');
+  document.getElementById('studentGender').value = '';
+  document.getElementById('studentError').style.display = 'none';
+
+  document.getElementById('addStudentOverlay').classList.add('active');
+}
+
+function closeAddStudent() {
+  document.getElementById('addStudentOverlay').classList.remove('active');
+}
+
+// --- OTP Auto-Focus (Reuse Existing Logic) ---
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll(".student-pin-box").forEach((box, i, arr) => {
+    box.addEventListener("input", () => {
+      if (box.value && arr[i + 1]) arr[i + 1].focus();
+    });
+
+    box.addEventListener("keydown", e => {
+      if (e.key === "Backspace" && !box.value && arr[i - 1]) {
+        arr[i - 1].focus();
+      }
+    });
+  });
+});
 
 
 // --- 4. Admin Auth & Dashboard Logic ---
@@ -164,11 +203,11 @@ function openAdminAuth() {
   } else {
     document.getElementById('adminAuthModal').classList.add('active');
     // Reset inputs
-    document.getElementById('adminSessionId').value = '';
+    document.querySelectorAll('.otp-box').forEach(i => i.value = '');
     document.getElementById('adminMobile').value = '';
     document.getElementById('adminAnswer').value = '';
     document.getElementById('adminError').style.display = 'none';
-    document.getElementById('adminSessionId').focus();
+    if (document.querySelector('.otp-box')) document.querySelector('.otp-box').focus();
   }
 }
 
@@ -176,8 +215,27 @@ function closeAdminAuth() {
   document.getElementById('adminAuthModal').classList.remove('active');
 }
 
+// OTP Auto-Focus Logic
+document.querySelectorAll(".otp-box").forEach((box, i, arr) => {
+  box.addEventListener("input", () => {
+    if (box.value && arr[i + 1]) arr[i + 1].focus();
+  });
+
+  box.addEventListener("keydown", e => {
+    if (e.key === "Backspace" && !box.value && arr[i - 1]) {
+      arr[i - 1].focus();
+    }
+  });
+});
+
+function getEnteredSessionId() {
+  return [...document.querySelectorAll(".otp-box")]
+    .map(b => b.value)
+    .join("");
+}
+
 function verifyAdminAccess() {
-  const sessionId = document.getElementById("adminSessionId").value.trim();
+  const sessionId = getEnteredSessionId();
   const mobile = document.getElementById("adminMobile").value.trim();
   const answer = document.getElementById("adminAnswer").value.trim().toLowerCase();
 
@@ -228,15 +286,15 @@ function renderAdminList() {
   allStudents.forEach((s, i) => {
     const row = document.createElement('tr');
     row.innerHTML = `
-            <td><span style="font-weight: 600; color: #0f172a;">${s.name}</span></td>
-            <td><span style="background: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-family: monospace; font-size: 0.85rem;">${s.id}</span></td>
+            <td><span style="font-weight: 600; color: #000000;">${s.name}</span></td>
+            <td><span class="badge gray">${s.id}</span></td>
             <td>${s.program}</td>
-            <td><span style="font-family: monospace; color: #64748b; letter-spacing: 1px;">${s.pin || "----"}</span></td>
+            <td><span class="badge gray" style="letter-spacing: 1px;">${s.pin || "----"}</span></td>
             <td class="text-right">
-                <button onclick="editStudent(${i})" style="margin-right: 5px; background: none; border: 1px solid #e2e8f0; padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #3b82f6;" title="Edit">
+                <button onclick="editStudent(${i})" class="icon-btn edit" title="Edit">
                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
-                <button onclick="deleteStudent(${i})" style="background: none; border: 1px solid #fee2e2; background: #fef2f2; padding: 6px 10px; border-radius: 4px; cursor: pointer; color: #ef4444;" title="Delete">
+                <button onclick="deleteStudent(${i})" class="icon-btn delete" title="Delete">
                    <i class="fa-solid fa-trash"></i>
                 </button>
             </td>
@@ -245,12 +303,40 @@ function renderAdminList() {
   });
 }
 
+// --- Delete Student Logic ---
+let studentToDeleteIndex = null;
+
 function deleteStudent(index) {
-  if (confirm(`Are you sure you want to delete ${allStudents[index].name}?`)) {
-    allStudents.splice(index, 1);
-    saveStudents();
+  studentToDeleteIndex = index;
+  const student = allStudents[index];
+
+  if (student) {
+    // Populate modal text
+    const display = document.getElementById('deleteStudentNameDisplay');
+    if (display) {
+      display.innerHTML = `Are you sure you want to remove <b>${student.name}</b>?<br>This action cannot be undone.`;
+    }
+    document.getElementById('deleteConfirmationOverlay').classList.add('active');
+  }
+}
+
+function closeDeleteModal() {
+  studentToDeleteIndex = null;
+  document.getElementById('deleteConfirmationOverlay').classList.remove('active');
+}
+
+function confirmDeleteStudent() {
+  if (studentToDeleteIndex !== null) {
+    allStudents.splice(studentToDeleteIndex, 1);
+
+    // Persist
+    localStorage.setItem('localStudentsData', JSON.stringify(allStudents));
+
+    // Refresh UI
     renderAdminList();
-    renderDropdown(); // Update main dropdown
+    renderDropdown();
+
+    closeDeleteModal();
   }
 }
 
@@ -273,43 +359,72 @@ function exportDataJS() {
   alert("Downloaded 'data.js'. Replace the file in your project folder to make changes permanent.");
 }
 
+// --- Edit & Save Logic ---
+let currentEditIndex = null; // Global tracker for edit mode
+
 function editStudent(index) {
-  // Reuse the Add Student Modal but populate it
+  currentEditIndex = index;
   const s = allStudents[index];
-  const form = document.getElementById('addStudentForm');
 
-  // Set form values
-  form.studentName.value = s.name;
-  form.studentId.value = s.id;
-  form.gender.value = s.gender;
-  form.program.value = s.program;
-  form.batch.value = s.batch;
+  // Populate IDs
+  document.getElementById('studentName').value = s.name;
+  document.getElementById('studentId').value = s.id;
+  document.getElementById('studentGender').value = s.gender;
+  document.getElementById('studentProgram').value = s.program;
+  document.getElementById('studentBatch').value = s.batch || "2024-2028"; // Fallback
 
-  // Parents[0] is Father
-  form.fatherName.value = s.parents[0].name;
-  form.fatherEmail.value = s.parents[0].email;
-  form.fatherPhone.value = s.parents[0].phone;
-
-  // Parents[1] is Mother
-  form.motherName.value = s.parents[1].name;
-  form.motherEmail.value = s.parents[1].email;
-  form.motherPhone.value = s.parents[1].phone;
-
-  // Parents[2] is Student Contact (if exists)
-  if (s.parents[2]) {
-    form.studentEmail.value = s.parents[2].email;
-    form.studentPhone.value = s.parents[2].phone;
+  // Parents - Father
+  if (s.parents && s.parents[0]) {
+    document.getElementById('fatherName').value = s.parents[0].name;
+    document.getElementById('fatherEmail').value = s.parents[0].email;
+    document.getElementById('fatherPhone').value = s.parents[0].phone;
   }
 
-  form.studentPin.value = s.pin || "00000"; // Populate PIN
-  form.signatureUrl.value = s.signature;
+  // Parents - Mother
+  if (s.parents && s.parents[1]) {
+    document.getElementById('motherName').value = s.parents[1].name;
+    document.getElementById('motherEmail').value = s.parents[1].email;
+    document.getElementById('motherPhone').value = s.parents[1].phone;
+  }
 
-  // Mark form as 'Edit Mode'
-  form.dataset.editIndex = index;
+  // Parents - Student Contact
+  if (s.parents && s.parents[2]) {
+    document.getElementById('studentEmail').value = s.parents[2].email;
+    document.getElementById('studentPhone').value = s.parents[2].phone;
+  }
 
-  // Show modal
-  closeAdminDashboard(); // Close dash temporarily
-  openAddStudentModal(true); // Pass true to keep the populated data
+  document.getElementById('studentSignature').value = s.signature;
+
+  // Populate PIN Boxes
+  const pinStr = (s.pin || "").toString();
+  const pinBoxes = document.querySelectorAll('.student-pin-box');
+  pinBoxes.forEach((box, i) => {
+    box.value = pinStr[i] || "";
+  });
+
+  // Change Title and Button for context
+  document.querySelector('#addStudentOverlay h2').textContent = "Edit Student Record";
+  document.querySelector('#addStudentOverlay .primary-btn').textContent = "Update Student";
+
+  // Open Modal without clearing
+  document.getElementById('addStudentOverlay').classList.add('active');
+  document.getElementById('studentError').style.display = 'none';
+}
+
+function openAddStudentModal(isEdit = false) {
+  if (!isEdit) {
+    // RESET for New Student
+    currentEditIndex = null;
+    document.querySelectorAll('#addStudentOverlay input').forEach(i => i.value = '');
+    document.querySelectorAll('.student-pin-box').forEach(i => i.value = '');
+    document.getElementById('studentGender').value = '';
+
+    document.querySelector('#addStudentOverlay h2').textContent = "Add New Student";
+    document.querySelector('#addStudentOverlay .primary-btn').textContent = "Save Student Record";
+  }
+
+  document.getElementById('studentError').style.display = 'none';
+  document.getElementById('addStudentOverlay').classList.add('active');
 }
 
 

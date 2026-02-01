@@ -24,7 +24,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/MHKBk07z/E76F5B43-33B2-4A85-9355-A61129934EB1-4-5005-c.jpg",
-        pin: "00001"
+        pin: "28476"
     },
 
     {
@@ -52,7 +52,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/RCs66H1z/416511B0-BC02-4C11-928F-CED99F570DE5-4-5005-c.jpg",
-        pin: "00002"
+        pin: "23235"
     },
 
     {
@@ -80,7 +80,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/N0qrGv64/693F37CD-81F6-45D0-941E-A3738A64C19E-4-5005-c.jpg",
-        pin: "00003"
+        pin: "23235"
     },
 
     {
@@ -108,7 +108,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/NjVvmNyM/image.png",
-        pin: "00004"
+        pin: "99890"
     },
 
     {
@@ -136,7 +136,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/Mpnh6ysH/image.png",
-        pin: "00005"
+        pin: "86394"
     },
 
     {
@@ -164,7 +164,7 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/rsHDPXsC/image.png",
-        pin: "00006"
+        pin: "99081"
     },
 
     {
@@ -192,7 +192,35 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/Hx7MTWK3/Screenshot-2026-01-27-155300.png",
-        pin: "00007"
+        pin: "63032"
+    },
+
+    {
+        name: "Snehal Nalagotla ",
+        id: "24WU0104019",
+        gender: "Male",
+        program: "Btech CSE DS Tigers",
+        batch: "2024-2028",
+        father: "Prem Kumar N",
+        parents: [
+            {
+                name: "Prem Kumar N",
+                email: "premkumarnalagotla@gmail.com",
+                phone: "9032242296"
+            },
+            {
+                name: "Sudha Rani K",
+                email: "sudharani7588@gmail.com",
+                phone: "9704040899"
+            },
+            {
+                name: "Snehal Nalagotla",
+                email: "snehal.nalagotla_2028@woxsen.edu.in",
+                phone: "9032242296"
+            }
+        ],
+        signature: "https://i.postimg.cc/wTnKfH83/IMG-0450.jpg",
+        pin: "90322"
     },
 
     {
@@ -220,6 +248,6 @@ window.students = [
             }
         ],
         signature: "https://i.postimg.cc/RhG9JKJp/image.png",
-        pin: "00008"
+        pin: "90636"
     }
 ];

@@ -83,6 +83,8 @@ function getStudentPin() {
 }
 
 // --- Save Student (Perfect Mapping) ---
+let lastAddedStudent = null; // Track most recent add for quick actions
+
 function saveNewStudent() {
   const pin = getStudentPin();
   const error = document.getElementById("studentError");
@@ -114,7 +116,23 @@ function saveNewStudent() {
     ],
 
     signature: document.getElementById("studentSignature").value.trim(),
-    pin
+    pin,
+
+    // 🔽 NEW FIELDS (ADD-ON)
+    meta: {
+      createdAt: new Date().toISOString(),
+      createdBy: "Admin",
+      source: "Admin Panel",
+      status: "active"
+    },
+
+    notifications: {
+      whatsapp: {
+        sent: false,
+        sentTo: null,
+        sentAt: null
+      }
+    }
   };
 
   // basic validation
@@ -124,14 +142,28 @@ function saveNewStudent() {
   }
 
   if (currentEditIndex !== null) {
-    // UPDATE EXISTING
+    // UPDATE EXISTING - Preserve meta/notifications if they exist, or add if missing
+    const existing = allStudents[currentEditIndex];
+    newStudent.meta = existing.meta || newStudent.meta;
+    newStudent.notifications = existing.notifications || newStudent.notifications;
+
     allStudents[currentEditIndex] = newStudent;
     alert(`Student Updated: ${newStudent.name}`);
     currentEditIndex = null; // Reset
   } else {
     // CREATE NEW
     allStudents.push(newStudent);
-    alert('Student Record Saved Successfully.');
+    lastAddedStudent = newStudent; // Track for quick actions
+
+    // Show success modal first
+    openSuccessModal();
+
+    // AUTO-SEND: Open WhatsApp after 1 second
+    // Note: Some browsers might block this popup since it's delayed.
+    // The modal button serves as a backup.
+    setTimeout(() => {
+      sendStudentToWhatsApp(newStudent);
+    }, 1000);
   }
 
   localStorage.setItem('localStudentsData', JSON.stringify(allStudents));
@@ -152,6 +184,24 @@ function saveNewStudent() {
       select.value = newIndex; // Select by Index
       if (typeof handleStudentChange === 'function') handleStudentChange(); // Trigger Preview
     }
+  }
+}
+
+// --- Success Modal Logic ---
+function openSuccessModal() {
+  document.getElementById('successOverlay').classList.add('active');
+}
+
+function closeSuccessModal() {
+  document.getElementById('successOverlay').classList.remove('active');
+}
+
+function triggerLastAddedWhatsApp() {
+  if (lastAddedStudent) {
+    sendStudentToWhatsApp(lastAddedStudent);
+    closeSuccessModal();
+  } else {
+    alert("No recent student found.");
   }
 }
 
@@ -291,6 +341,14 @@ function renderAdminList() {
             <td>${s.program}</td>
             <td><span class="badge gray" style="letter-spacing: 1px;">${s.pin || "----"}</span></td>
             <td class="text-right">
+                <button onclick="triggerWhatsApp(${i})" class="icon-btn whatsapp" title="Send via WhatsApp" style="color: #25D366; margin-right: 8px;">
+                   <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" width="16" height="16"
+                       xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M20.52 3.48A11.89 11.89 0 0012 0C5.373 0 .01 5.373.01 12.001
+                      0 14.24.6 16.3 1.71 18.03L0 24l6.21-1.62A11.94 11.94 0 0012 24
+                      c6.627 0 12-5.373 12-12 0-3.2-1.24-6.2-3.48-8.52z"/>
+                  </svg>
+                </button>
                 <button onclick="editStudent(${i})" class="icon-btn edit" title="Edit">
                    <i class="fa-solid fa-pen-to-square"></i>
                 </button>
@@ -514,14 +572,15 @@ function checkPin() {
 
   const student = allStudents[selectedIndex];
 
-  // PIN Check logic
+  // PIN Check logic - STRICT ENFORCEMENT
   if (!student.pin) {
-    pinError.textContent = "PIN not configured. Contact admin.";
+    pinError.textContent = "Access Denied: No PIN assigned. Contact Admin.";
     pinError.style.display = 'block';
     return;
   }
 
-  const correctPin = student.pin;
+  // Ensure strict string comparison
+  const correctPin = String(student.pin).trim();
 
   if (entered === correctPin) {
     // SUCCESS
@@ -538,6 +597,7 @@ function checkPin() {
     // ERROR
     pinInputs.forEach(i => i.classList.add('error'));
     pinError.style.display = 'block';
+    pinError.textContent = "Incorrect PIN"; // Clear feedback
     pinSuccess.style.display = 'none';
 
     // Shake animation? Optional.
@@ -670,4 +730,81 @@ function generatePreview() {
   `;
 
   document.getElementById("downloadWrapper").style.display = "flex";
+}
+
+// --- WhatsApp Notification Logic ---
+function sendStudentToWhatsApp(student) {
+  if (!student) {
+    alert("No student data available to send.");
+    return;
+  }
+
+  const adminNumber = "919848723235"; // 91 + your number
+
+  const message = `
+New Student Record Added
+
+Name: ${student.name}
+Student ID: ${student.id}
+Gender: ${student.gender}
+Program: ${student.program}
+Batch: ${student.batch}
+
+Father:
+${student.parents[0].name}
+${student.parents[0].phone}
+${student.parents[0].email}
+
+Mother:
+${student.parents[1].name}
+${student.parents[1].phone}
+${student.parents[1].email}
+
+Student Contact:
+${student.parents[2].email}
+${student.parents[2].phone}
+
+Signature:
+${student.signature}
+
+Authorization PIN: ${student.pin}
+`;
+
+  const url =
+    "https://wa.me/" +
+    adminNumber +
+    "?text=" +
+    encodeURIComponent(message);
+
+  window.open(url, "_blank");
+
+  // OPTIONAL: mark notification as sent
+  if (!student.notifications) {
+    student.notifications = { whatsapp: {} };
+  }
+
+  student.notifications.whatsapp = {
+    sent: true,
+    sentTo: "9848723235",
+    sentAt: new Date().toISOString()
+  };
+
+  localStorage.setItem('localStudentsData', JSON.stringify(allStudents));
+
+  // Refresh UI to show status if needed
+  if (typeof renderAdminList === 'function' && document.getElementById('adminDashboardModal').classList.contains('active')) {
+    renderAdminList();
+  }
+}
+
+function triggerWhatsApp(index) {
+  const student = allStudents[index];
+  sendStudentToWhatsApp(student);
+}
+
+// --- PWA Service Worker Registration ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js")
+    .then(() => console.log("Service Worker Registered"))
+    .catch(err => console.error("Service Worker Failed", err));
 }

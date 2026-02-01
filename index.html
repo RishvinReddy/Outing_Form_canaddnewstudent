@@ -7,8 +7,11 @@
   <title>Outing Permission Generator</title>
 
 
-
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- PWA Config -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
 
   <style>
     :root {
@@ -1523,6 +1526,24 @@
           <button class="primary-btn" onclick="confirmDeleteStudent()"
             style="background: #ef4444; border-color: #ef4444; color: white;">Delete Record</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Success Modal with WhatsApp Action -->
+    <div id="successOverlay" class="admin-overlay">
+      <div class="admin-card" style="max-width: 400px; text-align: center;">
+        <div class="admin-icon" style="background: #dcfce7; color: #16a34a;">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2 style="margin-top: 1rem;">Student Recorded</h2>
+        <p class="subtitle" style="margin-bottom: 2rem;">
+          Student data has been stored successfully.
+        </p>
+
+        <button class="primary-btn" onclick="triggerLastAddedWhatsApp()"
+          style="background: #25D366; border-color: #25D366; color: white; display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-bottom: 10px;">
+          <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i> Send via WhatsApp
+        </button>
       </div>
     </div>
 
